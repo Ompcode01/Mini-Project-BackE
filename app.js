@@ -15,6 +15,22 @@ app.get('/', (req,res) => {
     res.render("index");
 });
 
+app.get('/login', (req,res) => {
+    res.render("login");
+});
+
+app.get('/logout', (req,res) => {
+    res.cookie('token', '');
+    res.redirect("/login");
+});
+
+//Maanlo ye Profile ek protected Route hai
+//Ye tbhi khulna chahhiye jb user login ho
+app.get('/profile', isLoggedIn, async(req,res) => {
+    console.log(req.user); //Ye req.user me wo data hoga jo token me tha
+    res.render('login');
+})
+
 app.post('/register', async(req,res) => {
     //Sbse pehle check krenge wo user ka email already exist krta h ya nhi
     let {email, password, name, username, age} = req.body;
@@ -40,5 +56,37 @@ app.post('/register', async(req,res) => {
         })
     })
 });
+
+app.post('/login', async(req,res) => {
+    //Sbse pehle check krenge wo user ka email already exist krta h ya nhi
+    let {email, password} = req.body;
+    let user = await userModel.findOne({email});
+
+    if(!user){
+        return res.status(500).send("User does not exist");
+    }
+    
+    //If user exists, we will compare the password
+    bcrypt.compare(password, user.password, (err,result) => { //new password (jo abhi user enter krega) , old password (jo user ka db me store hai, i.e after creation)
+        if(result){
+            let token = jwt.sign({email: email, userid: user._id}, "secretkey");  //It gives token
+            res.cookie('token', token);
+            res.status(200).send("Login Successful");
+        }
+        else res.redirect('/login');
+    })
+});
+
+// Login, Logout, Register krliya 
+// AB humme Middleware chaiye, protected route ke liye
+function isLoggedIn(req, res, next){
+    if(req.cookies.token === "") res.send("Please login first");
+    else{
+        let data = jwt.verify(req.cookies.token, "secretkey");
+        req.user = data;
+        next();
+    }
+    
+}
 
 app.listen(3000);
