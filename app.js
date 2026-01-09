@@ -27,8 +27,23 @@ app.get('/logout', (req,res) => {
 //Maanlo ye Profile ek protected Route hai
 //Ye tbhi khulna chahhiye jb user login ho
 app.get('/profile', isLoggedIn, async(req,res) => {
-    console.log(req.user); //Ye req.user me wo data hoga jo token me tha
-    res.render('login');
+    //console.log(req.user); //Ye req.user me wo data hoga jo token me tha
+    //Profile pe kon login hai wo dekhne ke liye
+   let user = await userModel.findOne({email: req.user.email});
+    res.render('profile', {user}); // User ko profile page pe bhej diya
+})
+// Creater post tbhi kr payega jb wo LoggedIn ho
+app.post('/post', isLoggedIn, async(req,res) => {
+   let user = await userModel.findOne({email: req.user.email});
+   let {content} = req.body;
+
+   let post = await postModel.create({
+    user: user._id,
+    content
+   });
+   user.posts.push(post._id);
+   await user.save();
+   res.redirect('/profile');
 })
 
 app.post('/register', async(req,res) => {
@@ -71,7 +86,7 @@ app.post('/login', async(req,res) => {
         if(result){
             let token = jwt.sign({email: email, userid: user._id}, "secretkey");  //It gives token
             res.cookie('token', token);
-            res.status(200).send("Login Successful");
+            res.status(200).redirect("/profile");
         }
         else res.redirect('/login');
     })
@@ -80,7 +95,7 @@ app.post('/login', async(req,res) => {
 // Login, Logout, Register krliya 
 // AB humme Middleware chaiye, protected route ke liye
 function isLoggedIn(req, res, next){
-    if(req.cookies.token === "") res.send("Please login first");
+    if(req.cookies.token === "") res.redirect("/login");
     else{
         let data = jwt.verify(req.cookies.token, "secretkey");
         req.user = data;
