@@ -29,7 +29,8 @@ app.get('/logout', (req,res) => {
 app.get('/profile', isLoggedIn, async(req,res) => {
     //console.log(req.user); //Ye req.user me wo data hoga jo token me tha
     //Profile pe kon login hai wo dekhne ke liye
-   let user = await userModel.findOne({email: req.user.email});
+   let user = await userModel.findOne({email: req.user.email}).populate("posts");
+   //post show krna hai  .populate() -> after findOne
     res.render('profile', {user}); // User ko profile page pe bhej diya
 })
 // Creater post tbhi kr payega jb wo LoggedIn ho
