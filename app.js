@@ -49,6 +49,18 @@ app.get('/like/:id', isLoggedIn, async(req,res) => {
    res.redirect('/profile'); // User ko profile page pe bhej diya
 });
 
+app.get('/edit/:id', isLoggedIn, async(req,res) => {
+    // Pehle post dhundhna padega isliye pehle post dhundha hai
+   let post = await postModel.findOne({_id: req.params.id}).populate("user");  //postModel bcz humko post se related kaam krna hai na 
+   
+    res.render("edit", {post});  //post ka deta bhejenge taaki waha pe apna current post dikhe
+});
+
+app.post('/update/:id', isLoggedIn, async(req,res) => {
+   let post = await postModel.findOneAndUpdate({_id: req.params.id}, {content: req.body.content});  //Humko content ko update krna hai 
+    res.redirect("/profile");
+});
+
 // Creater post tbhi kr payega jb wo LoggedIn ho
 app.post('/post', isLoggedIn, async(req,res) => {
    let user = await userModel.findOne({email: req.user.email});
