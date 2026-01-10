@@ -31,8 +31,24 @@ app.get('/profile', isLoggedIn, async(req,res) => {
     //Profile pe kon login hai wo dekhne ke liye
    let user = await userModel.findOne({email: req.user.email}).populate("posts");
    //post show krna hai  .populate() -> after findOne
-    res.render('profile', {user}); // User ko profile page pe bhej diya
+   res.render('profile', {user}); // User ko profile page pe bhej diya
 })
+
+app.get('/like/:id', isLoggedIn, async(req,res) => {
+    //Profile pe kon login hai wo dekhne ke liye
+   let post = await postModel.findOne({_id: req.params.id}).populate("user");  //postModel bcz humko post se related kaam krna hai na 
+   
+   if(post.likes.indexOf(req.user.userid) === -1){
+    post.likes.push(req.user.userid); //like push krdenge req.user.id ke through bcz user loggedin hai humare paas uska data hai
+   }
+   else{
+    post.likes.splice(post.likes.indexOf(req.user.userid), 1);  //splice means hatao  -> kitna hatao 1
+   }
+
+   await post.save();
+   res.redirect('/profile'); // User ko profile page pe bhej diya
+});
+
 // Creater post tbhi kr payega jb wo LoggedIn ho
 app.post('/post', isLoggedIn, async(req,res) => {
    let user = await userModel.findOne({email: req.user.email});
