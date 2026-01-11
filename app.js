@@ -5,14 +5,37 @@ const postModel = require('./models/post');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto'); // This package is withn Node.js
+const path = require('path');
+const multer = require('multer');
 
 app.set('view engine', 'ejs');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+//Multer ka hai ye (Disk Storage me jayega )
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './public/images/uploads')  // Jo bhi file hum upload kre wo ye folder me jaaye
+  },
+  filename: function (req, file, cb) {
+    crypto.randomBytes(12, function (err, bytes) {
+        const fn = bytes.toString("hex") + path.extname(file.originalname)  // kisi bhi file ka extension nikal skte ho
+        //file.originalname -> jo browser pe dikh rah hai wo naam file ka
+        cb(null, fn)
+    })
+  }
+})
+
+const upload = multer({ storage: storage })
+
 app.get('/', (req,res) => {
     res.render("index");
+});
+
+app.get('/test', (req,res) => {
+    res.render("test");
 });
 
 app.get('/login', (req,res) => {
@@ -54,6 +77,10 @@ app.get('/edit/:id', isLoggedIn, async(req,res) => {
    let post = await postModel.findOne({_id: req.params.id}).populate("user");  //postModel bcz humko post se related kaam krna hai na 
    
     res.render("edit", {post});  //post ka deta bhejenge taaki waha pe apna current post dikhe
+});
+
+app.post("/upload", upload.single('image'), (req,res) => {
+    console.log(req.file);
 });
 
 app.post('/update/:id', isLoggedIn, async(req,res) => {
