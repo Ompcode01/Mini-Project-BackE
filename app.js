@@ -79,7 +79,7 @@ app.get('/edit/:id', isLoggedIn, async(req,res) => {
     res.render("edit", {post});  //post ka deta bhejenge taaki waha pe apna current post dikhe
 });
 
-app.post("/upload", upload.single('image'), (req,res) => {
+app.post('/upload', upload.single('image'), (req,res) => {
     console.log(req.file);
 });
 
